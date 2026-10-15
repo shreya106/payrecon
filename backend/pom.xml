@@ -11,21 +11,8 @@
 	<groupId>com.payrecon</groupId>
 	<artifactId>backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+	<name>PayRecon</name>
+	<description>Payment reconciliation engine</description>
 	<properties>
 		<java.version>25</java.version>
 	</properties>
