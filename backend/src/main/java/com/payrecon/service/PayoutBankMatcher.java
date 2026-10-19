@@ -8,6 +8,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.stereotype.Service;
+
 import com.payrecon.model.BankTransaction;
 import com.payrecon.model.BreakType;
 import com.payrecon.model.GroupItem;
@@ -18,6 +20,7 @@ import com.payrecon.model.ReconGroup;
 import com.payrecon.model.Source;
 import com.payrecon.util.BusinessDays;
 
+@Service 
 public class PayoutBankMatcher {
     private static final String STRIPE_DEPOSIT = "STRIPE TRANSFER";
     private static final int MAX_DAYS_TO_ARRIVE = 5;
@@ -33,6 +36,7 @@ public class PayoutBankMatcher {
             if (STRIPE_DEPOSIT.equals(bank.description())) {
                 depositByAmount.computeIfAbsent(bank.amount(), x -> new ArrayList<>()).add(bank);
             }
+        }
 
             for (ProcessorTransaction payout : payouts) {
                 LocalDate payoutDate = LocalDate.ofInstant(payout.createdAt(), ZoneOffset.UTC);
@@ -65,10 +69,10 @@ public class PayoutBankMatcher {
             }
         }
 
-      
+        return groups;
     }
-    return groups;
-}
+    
+
 
     private BankTransaction takeDeposit(Map<Long, List<BankTransaction>> depositByAmount, long netAmount,
             LocalDate payoutDate) {

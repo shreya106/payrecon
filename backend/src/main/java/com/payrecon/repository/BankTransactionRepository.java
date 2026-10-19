@@ -1,8 +1,10 @@
 package com.payrecon.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
 import com.payrecon.model.BankTransaction;
@@ -13,10 +15,27 @@ public class BankTransactionRepository {
     private static final int BATCH_SIZE = 500;
 
     private final JdbcTemplate jdbcTemplate;
-
-    public BankTransactionRepository(JdbcTemplate jdbcTemplate) {
+    private final JdbcClient jdbcClient;
+    public BankTransactionRepository(JdbcTemplate jdbcTemplate,JdbcClient jdbcClient) {
         this.jdbcTemplate = jdbcTemplate;
+        this.jdbcClient = jdbcClient;
     }
+
+    public List<BankTransaction> findAll() {
+    return jdbcClient.sql("""
+            SELECT id, external_id, description, amount, currency, posted_date
+            FROM bank_transactions
+            ORDER BY id
+            """)
+            .query((rs, rowNum) -> new BankTransaction(
+                    rs.getLong("id"),
+                    rs.getString("external_id"),
+                    rs.getString("description"),
+                    rs.getLong("amount"),
+                    rs.getString("currency"),
+                    rs.getObject("posted_date", LocalDate.class)))
+            .list();
+}
 
     public void saveAll(List<BankTransaction> transactions) {
         String sql = """
