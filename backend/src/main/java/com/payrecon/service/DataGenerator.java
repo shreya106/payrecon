@@ -16,6 +16,7 @@ import com.payrecon.model.GeneratedDataset;
 import com.payrecon.model.LedgerEntry;
 import com.payrecon.model.ProcessorTransaction;
 import com.payrecon.model.ProcessorTransactionType;
+import com.payrecon.util.BusinessDays;
 
 @Service
 public class DataGenerator {
@@ -83,7 +84,7 @@ public class DataGenerator {
 
             // 3. The payout reaches the bank some business days later,
             //    but only if that date is not in the future
-            LocalDate arrivalDate = addBusinessDays(day, config.payoutDelayBusinessDays());
+            LocalDate arrivalDate = BusinessDays.add(day, config.payoutDelayBusinessDays());
             if (!arrivalDate.isAfter(config.asOfDate())) {
                 bankCounter++;
                 bank.add(new BankTransaction(
@@ -121,17 +122,5 @@ public class DataGenerator {
                 .plusSeconds(random.nextInt(86_340));
     }
 
-    /** Adds business days, skipping Saturdays and Sundays. */
-    private static LocalDate addBusinessDays(LocalDate date, int businessDays) {
-        LocalDate result = date;
-        int added = 0;
-        while (added < businessDays) {
-            result = result.plusDays(1);
-            DayOfWeek dow = result.getDayOfWeek();
-            if (dow != DayOfWeek.SATURDAY && dow != DayOfWeek.SUNDAY) {
-                added++;
-            }
-        }
-        return result;
-    }
+   
 }
