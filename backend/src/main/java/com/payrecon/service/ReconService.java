@@ -86,6 +86,8 @@ public class ReconService {
         allProcessor.addAll(payouts);
         AccuracyReport accuracy = accuracyChecker.check(groups, allProcessor, ledger, bank);
 
+        runRepository.saveAccuracy(runId, accuracy);
+
         // 6. Build the summary
         int matched = (int) groups.stream().filter(g -> g.outcome() == Outcome.MATCHED).count();
         Map<BreakType, Long> breaksByType = groups.stream()
