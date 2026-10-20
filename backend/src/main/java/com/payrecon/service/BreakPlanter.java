@@ -1,5 +1,6 @@
 package com.payrecon.service;
 
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -84,7 +85,8 @@ public class BreakPlanter {
                     "Discount recorded in ledger only"));
         }
 
-        // 4. MISSING_IN_PROCESSOR: a ledger entry pointing to a Stripe ID that doesn't exist
+        // 4. MISSING_IN_PROCESSOR: a ledger entry pointing to a Stripe ID that doesn't
+        // exist
         for (int i = 0; i < saleLevelEach; i++) {
             LedgerEntry dateSource = candidates.get(pick++);
             String fakeChargeId = String.format("ch_%06d", 900_000 + i + 1);
@@ -131,8 +133,11 @@ public class BreakPlanter {
 
         // 7. UNEXPLAINED: a "STRIPE TRANSFER" deposit that matches no payout
         for (int i = 0; i < BANK_LEVEL_EACH; i++) {
-            long amount = 10_000 + random.nextInt(90_001);   // $100 to $1,000
+            long amount = 10_000 + random.nextInt(90_001); // $100 to $1,000
             LocalDate date = config.asOfDate().minusDays(3 + random.nextInt(20));
+            while (date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY) {
+                date = date.minusDays(1);
+            }
             BankTransaction mystery = new BankTransaction(
                     null, String.format("B%05d", nextBankNumber++),
                     "STRIPE TRANSFER", amount, "USD", date);

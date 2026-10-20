@@ -86,31 +86,35 @@ public class DashboardRepository {
                 .list();
     }
 
-    public long countBreaks(long runId, String breakType) {
+    public long countBreaks(long runId, String breakType, boolean includeInTransit) {
         return jdbcClient.sql("""
                 SELECT COUNT(*) FROM recon_groups
                 WHERE run_id = :runId
                   AND outcome = 'BREAK'
                   AND (CAST(:type AS TEXT) IS NULL OR break_type = CAST(:type AS TEXT))
+                  AND (:includeInTransit OR break_type <> 'IN_TRANSIT')
                 """)
                 .param("runId", runId)
                 .param("type", breakType, Types.VARCHAR)
+                .param("includeInTransit", includeInTransit)
                 .query(Long.class)
                 .single();
     }
 
-    public List<BreakRow> findBreaks(long runId, String breakType, int size, int offset) {
+    public List<BreakRow> findBreaks(long runId, String breakType, boolean includeInTransit, int size, int offset) {
         return jdbcClient.sql("""
                 SELECT id, break_type, amount_impact, ai_confidence, ai_cause
                 FROM recon_groups
                 WHERE run_id = :runId
                   AND outcome = 'BREAK'
                   AND (CAST(:type AS TEXT) IS NULL OR break_type = CAST(:type AS TEXT))
+                  AND (:includeInTransit OR break_type <> 'IN_TRANSIT')
                 ORDER BY amount_impact DESC, id
                 LIMIT :size OFFSET :offset
                 """)
                 .param("runId", runId)
                 .param("type", breakType, Types.VARCHAR)
+                .param("includeInTransit", includeInTransit)
                 .param("size", size)
                 .param("offset", offset)
                 .query((rs, rowNum) -> new BreakRow(

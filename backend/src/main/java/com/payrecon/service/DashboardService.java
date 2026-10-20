@@ -63,15 +63,15 @@ public class DashboardService {
                 breaksByType, run.accuracy());
     }
 
-    public PageResponse<BreakRow> breaks(long runId, BreakType type, int page, int size) {
+    public PageResponse<BreakRow> breaks(long runId, BreakType type, boolean includeInTransit, int page, int size) {
         repository.findRun(runId).orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND, "Run " + runId + " not found"));
-
+    
         String typeName = type == null ? null : type.name();
-        long total = repository.countBreaks(runId, typeName);
-        List<BreakRow> items = repository.findBreaks(runId, typeName, size, page * size);
+        long total = repository.countBreaks(runId, typeName, includeInTransit);
+        List<BreakRow> items = repository.findBreaks(runId, typeName, includeInTransit, size, page * size);
         int totalPages = (int) ((total + size - 1) / size);
-
+    
         return new PageResponse<>(items, page, size, total, totalPages);
     }
 

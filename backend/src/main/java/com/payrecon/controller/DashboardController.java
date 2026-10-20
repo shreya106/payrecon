@@ -35,9 +35,10 @@ public class DashboardController {
     public PageResponse<BreakRow> breaks(
             @PathVariable long runId,
             @RequestParam(required = false) BreakType type,
+            @RequestParam(defaultValue = "true") boolean includeInTransit,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
-        return dashboardService.breaks(runId, type, page, size);
+        return dashboardService.breaks(runId, type, includeInTransit, page, size);
     }
 
     @GetMapping("/breaks/{groupId}")

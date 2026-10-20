@@ -1,39 +1,78 @@
-import { useEffect, useState } from 'react'
-
-type RunSummary = {
-  runId: number
-  matched: number
-  breaks: number
-  amountAtRiskCents: number
-}
-
-function formatCents(cents: number): string {
-  return (cents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
-}
+import { useCallback, useEffect, useState } from 'react'
+import { api } from './api'
+import { ActionBar } from './components/ActionBar'
+import { BreakDetailPanel } from './components/BreakDetailPanel'
+import { BreaksTable } from './components/BreaksTable'
+import { SummaryCards } from './components/SummaryCards'
+import type { RunSummary } from './types'
 
 export default function App() {
   const [summary, setSummary] = useState<RunSummary | null>(null)
+  const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
 
-  useEffect(() => {
-    fetch('/api/recon/runs/latest')
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        return res.json()
+  const loadSummary = useCallback(() => {
+    api
+      .latestRun()
+      .then((s) => {
+        setSummary(s)
+        setLoaded(true)
+        setError(null)
       })
-      .then(setSummary)
       .catch((err: Error) => setError(err.message))
   }, [])
 
-  if (error) return <p className="p-8 text-red-600">Error: {error}</p>
-  if (!summary) return <p className="p-8 text-gray-500">Loading…</p>
+  useEffect(() => {
+    loadSummary()
+  }, [loadSummary, refreshKey])
+
+  function refresh() {
+    setSelectedId(null)
+    setRefreshKey((k) => k + 1)
+  }
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold">PayRecon</h1>
-      <p className="mt-2">Run #{summary.runId}</p>
-      <p>{summary.matched} matched · {summary.breaks} breaks</p>
-      <p className="font-semibold text-red-700">{formatCents(summary.amountAtRiskCents)} at risk</p>
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <header className="border-b border-gray-200 bg-white">
+        <div className="mx-auto flex max-w-7xl items-start justify-between gap-4 p-4">
+          <div>
+            <h1 className="text-xl font-bold">PayRecon</h1>
+            <p className="text-sm text-gray-500">
+              Reconciles Stripe, ledger and bank records, and explains every break.
+            </p>
+          </div>
+          <ActionBar summary={summary} onChanged={refresh} />
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-7xl space-y-4 p-4">
+        {error && <p className="text-red-600">Error: {error}</p>}
+        {!loaded && !error && <p className="text-gray-500">Loading…</p>}
+        {loaded && !summary && (
+          <p className="text-gray-600">No reconciliation runs yet. Click <strong>Run demo</strong> to start.</p>
+        )}
+
+        {summary && (
+          <>
+            <SummaryCards summary={summary} />
+            <div className="grid gap-4 lg:grid-cols-5">
+              <div className="min-w-0 lg:col-span-3">
+                <BreaksTable
+                  key={`${summary.runId}-${refreshKey}`}
+                  runId={summary.runId}
+                  selectedId={selectedId}
+                  onSelect={setSelectedId}
+                />
+              </div>
+              <div className="min-w-0 lg:col-span-2">
+                <BreakDetailPanel key={`detail-${refreshKey}`} groupId={selectedId} />
+              </div>
+            </div>
+          </>
+        )}
+      </main>
     </div>
   )
 }
