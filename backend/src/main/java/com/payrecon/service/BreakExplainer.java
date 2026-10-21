@@ -1,6 +1,11 @@
 package com.payrecon.service;
 
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.converter.BeanOutputConverter;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
@@ -11,6 +16,7 @@ import com.payrecon.model.BreakForExplanation;
 
 @Service
 public class BreakExplainer {
+  private static final Logger log = LoggerFactory.getLogger(BreakExplainer.class);
 
     private static final String SYSTEM_PROMPT = """
             You are a payments reconciliation analyst at a company that sells online and uses Stripe.
@@ -55,26 +61,52 @@ public class BreakExplainer {
     }
 
     public List<BreakExplanation> explain(List<BreakForExplanation> breaks) {
-        StringBuilder text = new StringBuilder("Explain these breaks.\n\n");
-        for (BreakForExplanation b : breaks) {
-            text.append("groupId: ").append(b.groupId()).append('\n')
-                .append("breakType: ").append(b.breakType()).append('\n')
-                .append("amountImpact in cents: ").append(b.amountImpact()).append('\n')
-                .append("records:\n");
-            for (String line : b.evidence()) {
-                text.append("  - ").append(line).append('\n');
-            }
-            text.append('\n');
-        }
-
-        BreakExplanationBatch result = chatClient.prompt()
-                .user(text.toString())
-                .call()
-                .entity(BreakExplanationBatch.class);
-
-        if (result == null || result.explanations() == null) {
-            return List.of();
-        }
-        return result.explanations();
-    }
+      StringBuilder text = new StringBuilder("Explain these breaks.\n\n");
+      for (BreakForExplanation b : breaks) {
+          text.append("groupId: ").append(b.groupId()).append('\n')
+              .append("breakType: ").append(b.breakType()).append('\n')
+              .append("amountImpact in cents: ").append(b.amountImpact()).append('\n')
+              .append("records:\n");
+          for (String line : b.evidence()) {
+              text.append("  - ").append(line).append('\n');
+          }
+          text.append('\n');
+      }
+  
+      // Tells Claude the exact JSON shape we want, and later turns the JSON into our record
+      BeanOutputConverter<BreakExplanationBatch> converter =
+              new BeanOutputConverter<>(BreakExplanationBatch.class);
+  
+      ChatResponse response = chatClient.prompt()
+              .user(u -> u.text(text + "\n{format}").param("format", converter.getFormat()))
+              .call()
+              .chatResponse();
+  
+      if (response == null) {
+          throw new IllegalStateException("AI returned no response");
+      }
+  
+      // The reply can have several parts (e.g. the model's reasoning, then the answer).
+      // Use the last part that actually contains text.
+      String json = "";
+      for (Generation part : response.getResults()) {
+          String partText = part.getOutput().getText();
+          log.debug("AI reply part: finishReason={}, length={}",
+                  part.getMetadata().getFinishReason(),
+                  partText == null ? 0 : partText.length());
+          if (partText != null && !partText.isBlank()) {
+              json = partText;
+          }
+      }
+  
+      if (json.isBlank()) {
+          throw new IllegalStateException("AI reply contained no text");
+      }
+  
+      BreakExplanationBatch result = converter.convert(json);
+      if (result == null || result.explanations() == null) {
+          return List.of();
+      }
+      return result.explanations();
+  }
 }

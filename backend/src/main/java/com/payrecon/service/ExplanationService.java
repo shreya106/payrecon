@@ -19,7 +19,7 @@ public class ExplanationService {
     private static final Logger log = LoggerFactory.getLogger(ExplanationService.class);
 
     private static final int BATCH_SIZE = 10;
-    private static final long PAUSE_BETWEEN_BATCHES_MS = 7_000;   // stay under the free-tier limit
+    private static final long PAUSE_BETWEEN_BATCHES_MS = 1_000;  
 
     private final ExplanationRepository repository;
     private final BreakExplainer explainer;

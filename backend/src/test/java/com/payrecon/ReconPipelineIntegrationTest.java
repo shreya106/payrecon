@@ -13,7 +13,7 @@ import com.payrecon.model.ReconRunSummary;
 import com.payrecon.service.DemoDataService;
 import com.payrecon.service.ReconService;
 
-@SpringBootTest(properties = "spring.ai.google.genai.api-key=test-key-not-used")
+@SpringBootTest(properties = "spring.ai.anthropic.api-key=test-key-not-used")
 @Import(TestcontainersConfiguration.class)
 class ReconPipelineIntegrationTest {
 
