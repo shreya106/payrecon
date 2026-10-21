@@ -31,13 +31,22 @@ public class AccuracyChecker {
         this.seededBreakRepository = seededBreakRepository;
     }
 
+    /** For saved runs: the answer key comes from the database. */
     public AccuracyReport check(List<ReconGroup> groups,
                                 List<ProcessorTransaction> processorRows,
                                 List<LedgerEntry> ledgerEntries,
                                 List<BankTransaction> bankTransactions) {
+        return check(groups, processorRows, ledgerEntries, bankTransactions, seededBreakRepository.findAll());
+    }
 
-        // 1. A lookup from "SOURCE#id" to external ID, e.g. "LEDGER#42" -> "L000042".
-        //    Groups store our database ids; the answer key stores external IDs.
+    /** For the sandbox: the answer key is passed in directly. */
+    public AccuracyReport check(List<ReconGroup> groups,
+                                List<ProcessorTransaction> processorRows,
+                                List<LedgerEntry> ledgerEntries,
+                                List<BankTransaction> bankTransactions,
+                                List<SeededBreak> answerKey) {
+
+        // 1. Lookup from "SOURCE#id" to external ID, e.g. "LEDGER#42" -> "L000042"
         Map<String, String> externalIdOf = new HashMap<>();
         for (ProcessorTransaction p : processorRows) {
             externalIdOf.put(Source.PROCESSOR + "#" + p.id(), p.externalId());
@@ -49,7 +58,7 @@ public class AccuracyChecker {
             externalIdOf.put(Source.BANK + "#" + b.id(), b.externalId());
         }
 
-        // 2. Describe every break the engine found as text, e.g. "DUPLICATE:L000567,L006001,ch_000567"
+        // 2. Every break the engine found, as text
         Set<String> found = new HashSet<>();
         for (ReconGroup group : groups) {
             if (group.outcome() != Outcome.BREAK) {
@@ -62,13 +71,13 @@ public class AccuracyChecker {
             found.add(describe(group.breakType(), ids));
         }
 
-        // 3. Describe every break in the answer key the same way
+        // 3. Every break in the answer key, as text
         Set<String> expected = new HashSet<>();
-        for (SeededBreak seeded : seededBreakRepository.findAll()) {
+        for (SeededBreak seeded : answerKey) {
             expected.add(describe(seeded.breakType(), seeded.externalIds()));
         }
 
-        // 4. Compare the two sets
+        // 4. Compare
         int detected = 0;
         for (String e : expected) {
             if (found.contains(e)) {
@@ -85,7 +94,6 @@ public class AccuracyChecker {
         return new AccuracyReport(expected.size(), detected, expected.size() - detected, falseAlarms);
     }
 
-    /** Same type + same IDs (in any order) gives the same text. */
     private static String describe(BreakType type, List<String> externalIds) {
         return type + ":" + externalIds.stream().sorted().collect(Collectors.joining(","));
     }

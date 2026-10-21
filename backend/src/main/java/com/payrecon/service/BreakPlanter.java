@@ -33,12 +33,16 @@ public class BreakPlanter {
     }
 
     public PlantResult plant(GeneratedDataset clean, Random random) {
+        return plant(clean, random, config.breakRate());
+    }
+    
+    public PlantResult plant(GeneratedDataset clean, Random random, double breakRate) {
         List<ProcessorTransaction> processor = clean.processorTransactions();
         List<LedgerEntry> ledger = new ArrayList<>(clean.ledgerEntries());
         List<BankTransaction> bank = new ArrayList<>(clean.bankTransactions());
         List<SeededBreak> answerKey = new ArrayList<>();
 
-        int totalBreaks = (int) Math.round(clean.ledgerEntries().size() * config.breakRate());
+        int totalBreaks = (int) Math.round(clean.ledgerEntries().size() * breakRate);
         int saleLevelEach = (totalBreaks - 2 * BANK_LEVEL_EACH) / 4;
 
         int nextLedgerNumber = clean.ledgerEntries().size() + 1;
