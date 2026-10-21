@@ -43,7 +43,13 @@ export default function App() {
               Reconciles Stripe, ledger and bank records, and explains every break.
             </p>
           </div>
-          <ActionBar summary={summary} onChanged={refresh} />
+          {import.meta.env.DEV ? (
+            <ActionBar summary={summary} onChanged={refresh} />
+          ) : (
+            <p className="max-w-xs text-right text-xs text-gray-500">
+              Read-only demo on synthetic data. Free hosting: the first load may take a minute.
+            </p>
+          )}
         </div>
       </header>
 
