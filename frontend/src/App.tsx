@@ -1,10 +1,32 @@
 import { useCallback, useEffect, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { api } from './api'
 import { ActionBar } from './components/ActionBar'
 import { BreakDetailPanel } from './components/BreakDetailPanel'
 import { BreaksTable } from './components/BreaksTable'
-import { SummaryCards } from './components/SummaryCards'
+import { Checks, Hero, MoneyFlow } from './components/Overview'
 import type { RunSummary } from './types'
+
+const GITHUB_URL = 'https://github.com/YOUR-USERNAME/payrecon'
+
+function Logo() {
+  return (
+    <span className="flex items-center gap-2.5">
+      <span className="flex items-center" aria-hidden="true">
+        <span className="logo-dot h-3.5 w-3.5 rounded-full bg-stripe" style={{ '--from': '-14px' } as CSSProperties} />
+        <span
+          className="logo-dot -ml-1.5 h-3.5 w-3.5 rounded-full bg-ledger ring-2 ring-hero"
+          style={{ animationDelay: '0.1s' }}
+        />
+        <span
+          className="logo-dot -ml-1.5 h-3.5 w-3.5 rounded-full bg-bank ring-2 ring-hero"
+          style={{ '--from': '14px', animationDelay: '0.2s' } as CSSProperties}
+        />
+      </span>
+      <span className="text-lg font-semibold tracking-tight">PayRecon</span>
+    </span>
+  )
+}
 
 export default function App() {
   const [summary, setSummary] = useState<RunSummary | null>(null)
@@ -34,51 +56,62 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-start justify-between gap-4 p-4">
-          <div>
-            <h1 className="text-xl font-bold">PayRecon</h1>
-            <p className="text-sm text-gray-500">
-              Reconciles Stripe, ledger and bank records, and explains every break.
-            </p>
+    <div className="min-h-screen">
+      {/* Teal band: header + headline */}
+      <div className="bg-hero text-hero-ink">
+        <header className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-5">
+          <div className="flex items-center gap-5">
+            <Logo />
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="text-sm text-mint hover:underline">
+              GitHub
+            </a>
           </div>
           {import.meta.env.DEV ? (
             <ActionBar summary={summary} onChanged={refresh} />
           ) : (
-            <p className="max-w-xs text-right text-xs text-gray-500">
-              Read-only demo on synthetic data. Free hosting: the first load may take a minute.
-            </p>
+            <p className="text-right text-xs text-hero-muted">Demo on synthetic data. The first load can take a minute.</p>
           )}
-        </div>
-      </header>
+        </header>
+        <Hero summary={summary} />
+      </div>
 
-      <main className="mx-auto max-w-7xl space-y-4 p-4">
-        {error && <p className="text-red-600">Error: {error}</p>}
-        {!loaded && !error && <p className="text-gray-500">Loading…</p>}
+      <main className="mx-auto max-w-6xl px-6 pb-16">
+        {error && <p className="py-10 text-risk">Couldn’t load results: {error}</p>}
+        {!loaded && !error && <p className="py-10 text-muted">Loading…</p>}
         {loaded && !summary && (
-          <p className="text-gray-600">No reconciliation runs yet. Click <strong>Run demo</strong> to start.</p>
+          <p className="py-10 text-muted">No results yet. Run the demo to reconcile a sample month of payments.</p>
         )}
+
+        <MoneyFlow />
 
         {summary && (
           <>
-            <SummaryCards summary={summary} />
-            <div className="grid gap-4 lg:grid-cols-5">
+            <Checks summary={summary} />
+            <div className={selectedId == null ? '' : 'grid gap-6 lg:grid-cols-5'}>
               <div className="min-w-0 lg:col-span-3">
                 <BreaksTable
                   key={`${summary.runId}-${refreshKey}`}
                   runId={summary.runId}
+                  counts={summary.breaksByType}
                   selectedId={selectedId}
                   onSelect={setSelectedId}
                 />
               </div>
-              <div className="min-w-0 lg:col-span-2">
-                <BreakDetailPanel key={`detail-${refreshKey}`} groupId={selectedId} />
-              </div>
+              {selectedId != null && (
+                <div className="min-w-0 lg:col-span-2 lg:pt-14">
+                  <BreakDetailPanel groupId={selectedId} onClose={() => setSelectedId(null)} />
+                </div>
+              )}
             </div>
           </>
         )}
       </main>
+
+      <footer className="border-t border-rule">
+        <p className="mx-auto max-w-6xl px-6 py-6 text-xs text-muted">
+          Built with Java, Spring Boot, PostgreSQL, React, TypeScript and Spring AI. All data is synthetic.
+        </p>
+      </footer>
     </div>
   )
 }

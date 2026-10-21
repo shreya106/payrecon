@@ -28,7 +28,7 @@ export function ActionBar({ summary, onChanged }: Props) {
       await api.generate()
       setStatus('Reconciling…')
       const run = await api.run()
-      onChanged() // show results right away, before the AI finishes
+      onChanged()
       await explain(run.runId)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -56,7 +56,7 @@ export function ActionBar({ summary, onChanged }: Props) {
       <div className="flex gap-2">
         {unexplained > 0 && (
           <button
-            className="rounded border border-gray-300 bg-white px-3 py-2 text-sm disabled:opacity-50"
+            className="rounded-md border border-hero-muted/40 px-3 py-2 text-sm text-hero-ink hover:bg-white/10 disabled:opacity-50"
             disabled={busy}
             onClick={explainRemaining}
           >
@@ -64,15 +64,15 @@ export function ActionBar({ summary, onChanged }: Props) {
           </button>
         )}
         <button
-          className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-md bg-mint px-4 py-2 text-sm font-semibold text-hero hover:brightness-95 disabled:opacity-50"
           disabled={busy}
           onClick={runDemo}
         >
           Run demo
         </button>
       </div>
-      {status && <p className="text-sm text-blue-700">{status}</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {status && <p className="text-sm text-mint">{status}</p>}
+      {error && <p className="text-sm text-coral">{error}</p>}
     </div>
   )
 }

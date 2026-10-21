@@ -1,1 +1,76 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
+
+  /* page */
+  --color-paper: #f4f6f3;
+  --color-ink: #1d2633;
+  --color-muted: #66707b;
+  --color-rule: #d9dfd8;
+  --color-link: #2b4c7e;
+  --color-risk: #b42318;
+  --color-agree: #2e7d5b;
+
+  /* top band */
+  --color-hero: #0f3b3c;
+  --color-hero-ink: #eef5f1;
+  --color-hero-muted: #a9c3ba;
+  --color-mint: #7fd6b0;
+  --color-coral: #ffb199;
+
+  /* one color per system */
+  --color-stripe: #6d5bd0;
+  --color-ledger: #2e8a62;
+  --color-bank: #2f6db5;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Animation 1: the logo dots slide together on page load */
+@keyframes gather {
+  from {
+    transform: translateX(var(--from, 0));
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.logo-dot {
+  animation: gather 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Animation 2: a coin travels along the money-flow line */
+@keyframes travel {
+  0% { left: 0%; opacity: 0; }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+
+.coin {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 9999px;
+  background: var(--color-mint);
+  box-shadow: 0 0 0 5px rgb(127 214 176 / 0.3);
+  animation: travel 6s ease-in-out infinite;
+}
+
+/* Respect people who turn off motion in their system settings */
+@media (prefers-reduced-motion: reduce) {
+  .logo-dot { animation: none; }
+  .coin { display: none; }
+}
