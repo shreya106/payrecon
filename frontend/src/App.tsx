@@ -7,7 +7,7 @@ import { BreaksTable } from './components/BreaksTable'
 import { Checks, Hero, MoneyFlow } from './components/Overview'
 import type { RunSummary } from './types'
 
-const GITHUB_URL = 'https://github.com/YOUR-USERNAME/payrecon'
+const GITHUB_URL = 'https://github.com/shreya106/payrecon'
 
 function Logo() {
   return (
