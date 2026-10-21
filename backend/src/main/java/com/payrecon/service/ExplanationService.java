@@ -8,15 +8,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.payrecon.config.GeneratorConfig;
 import com.payrecon.model.BreakExplanation;
 import com.payrecon.model.BreakForExplanation;
 import com.payrecon.model.ExplainSummary;
 import com.payrecon.repository.ExplanationRepository;
 
+
 @Service
 public class ExplanationService {
 
     private static final Logger log = LoggerFactory.getLogger(ExplanationService.class);
+    private final GeneratorConfig config;
 
     private static final int BATCH_SIZE = 10;
     private static final long PAUSE_BETWEEN_BATCHES_MS = 1_000;  
@@ -24,9 +27,10 @@ public class ExplanationService {
     private final ExplanationRepository repository;
     private final BreakExplainer explainer;
 
-    public ExplanationService(ExplanationRepository repository, BreakExplainer explainer) {
+    public ExplanationService(ExplanationRepository repository, BreakExplainer explainer, GeneratorConfig config) {
         this.repository = repository;
         this.explainer = explainer;
+        this.config = config;
     }
 
     public ExplainSummary explain(long runId) {
@@ -49,7 +53,7 @@ public class ExplanationService {
                     expectedIds.add(b.groupId());
                 }
 
-                for (BreakExplanation e : explainer.explain(batch)) {
+                for (BreakExplanation e : explainer.explain(batch, config.asOfDate())) {
                     if (expectedIds.remove(e.groupId())) {
                         explained += repository.save(runId, e);
                     } else {

@@ -1,4 +1,5 @@
 package com.payrecon.service;
+import java.time.LocalDate;
 
 import java.util.List;
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ public class BreakExplainer {
             - Bank: the company's bank statement. Each Stripe payout should arrive as one
               STRIPE TRANSFER deposit about 2 business days after the payout.
             All amounts are in cents (5000 means $50.00). Write money as dollars in your answers.
+            Use the reconciliation date you are given as "today" to judge whether something is late.
 
             Break types:
             - MISSING_IN_LEDGER: a Stripe charge has no ledger entry.
@@ -60,8 +62,10 @@ public class BreakExplainer {
         this.chatClient = builder.defaultSystem(SYSTEM_PROMPT).build();
     }
 
-    public List<BreakExplanation> explain(List<BreakForExplanation> breaks) {
-      StringBuilder text = new StringBuilder("Explain these breaks.\n\n");
+    public List<BreakExplanation> explain(List<BreakForExplanation> breaks, LocalDate asOfDate) {
+      StringBuilder text = new StringBuilder()
+              .append("Reconciliation date (\"today\" for this data): ").append(asOfDate).append("\n\n")
+              .append("Explain these breaks.\n\n");
       for (BreakForExplanation b : breaks) {
           text.append("groupId: ").append(b.groupId()).append('\n')
               .append("breakType: ").append(b.breakType()).append('\n')

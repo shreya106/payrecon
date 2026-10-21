@@ -1,9 +1,27 @@
-import type { BreakDetail, BreakRow, BreakType, Page, RunSummary } from './types'
+import type {
+  BreakDetail,
+  BreakRow,
+  BreakType,
+  Page,
+  RunSummary,
+  SandboxExplanation,
+  SandboxRun,
+} from './types'
+
+/** An error that also remembers the HTTP status code, e.g. 429. */
+export class ApiError extends Error {
+  status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.status = status
+  }
+}
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, options)
   if (!res.ok) {
-    throw new Error(`${options?.method ?? 'GET'} ${url} failed (HTTP ${res.status})`)
+    throw new ApiError(`${options?.method ?? 'GET'} ${url} failed (HTTP ${res.status})`, res.status)
   }
   return res.json() as Promise<T>
 }
@@ -13,7 +31,7 @@ export const api = {
   async latestRun(): Promise<RunSummary | null> {
     const res = await fetch('/api/recon/runs/latest')
     if (res.status === 404) return null
-    if (!res.ok) throw new Error(`GET /api/recon/runs/latest failed (HTTP ${res.status})`)
+    if (!res.ok) throw new ApiError(`GET /api/recon/runs/latest failed (HTTP ${res.status})`, res.status)
     return res.json() as Promise<RunSummary>
   },
 
@@ -43,9 +61,20 @@ export const api = {
   },
 
   explain(runId: number) {
-    return request<{ explained: number; failedBatches: number }>(
-      `/api/recon/${runId}/explain`,
-      { method: 'POST' },
-    )
+    return request<{ explained: number; failedBatches: number }>(`/api/recon/${runId}/explain`, {
+      method: 'POST',
+    })
+  },
+
+  // ---------- Sandbox ----------
+
+  sandboxRun() {
+    return request<SandboxRun>('/api/sandbox/run')
+  },
+
+  sandboxExplain(seed: number, index: number) {
+    return request<SandboxExplanation>(`/api/sandbox/explain?seed=${seed}&index=${index}`, {
+      method: 'POST',
+    })
   },
 }

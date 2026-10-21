@@ -78,3 +78,28 @@ export type BreakDetail = {
   explanation: AiExplanation | null
   records: RecordView[]
 }
+
+export type SandboxBreak = {
+  index: number
+  breakType: BreakType
+  amountImpactCents: number
+  records: string[]
+}
+
+export type SandboxRun = {
+  seed: number
+  totalGroups: number
+  matched: number
+  breaks: number
+  amountAtRiskCents: number
+  breaksByType: Partial<Record<BreakType, number>>
+  accuracy: Accuracy
+  breakList: SandboxBreak[]
+}
+
+export type SandboxExplanation = {
+  cause: string
+  confidence: Confidence | null
+  suggestedFix: string | null
+  aiExplanationsLeftToday: number
+}

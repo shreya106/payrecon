@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { api } from './api'
 import { ActionBar } from './components/ActionBar'
 import { BreakDetailPanel } from './components/BreakDetailPanel'
 import { BreaksTable } from './components/BreaksTable'
 import { Checks, Hero, MoneyFlow } from './components/Overview'
+import { SandboxView } from './components/SandboxView'
 import type { RunSummary } from './types'
 
 const GITHUB_URL = 'https://github.com/shreya106/payrecon'
+
+type Tab = 'sample' | 'own'
 
 function Logo() {
   return (
@@ -28,12 +31,28 @@ function Logo() {
   )
 }
 
+function TabButton(props: { active: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      role="tab"
+      aria-selected={props.active}
+      onClick={props.onClick}
+      className={`rounded px-4 py-2 font-medium ${
+        props.active ? 'bg-hero text-hero-ink' : 'text-muted hover:text-ink'
+      }`}
+    >
+      {props.children}
+    </button>
+  )
+}
+
 export default function App() {
   const [summary, setSummary] = useState<RunSummary | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [tab, setTab] = useState<Tab>('sample')
 
   const loadSummary = useCallback(() => {
     api
@@ -78,33 +97,51 @@ export default function App() {
       <main className="mx-auto max-w-6xl px-6 pb-16">
         {error && <p className="py-10 text-risk">Couldn’t load results: {error}</p>}
         {!loaded && !error && <p className="py-10 text-muted">Loading…</p>}
-        {loaded && !summary && (
-          <p className="py-10 text-muted">No results yet. Run the demo to reconcile a sample month of payments.</p>
-        )}
 
         <MoneyFlow />
+        {summary && <Checks summary={summary} />}
 
-        {summary && (
-          <>
-            <Checks summary={summary} />
-            <div className={selectedId == null ? '' : 'grid gap-6 lg:grid-cols-5'}>
-              <div className="min-w-0 lg:col-span-3">
-                <BreaksTable
-                  key={`${summary.runId}-${refreshKey}`}
-                  runId={summary.runId}
-                  counts={summary.breaksByType}
-                  selectedId={selectedId}
-                  onSelect={setSelectedId}
-                />
-              </div>
-              {selectedId != null && (
-                <div className="min-w-0 lg:col-span-2 lg:pt-14">
-                  <BreakDetailPanel groupId={selectedId} onClose={() => setSelectedId(null)} />
+        {/* Explore: saved sample month, or your own generated month */}
+        <section className="pt-4">
+          <h3 className="mb-4 font-serif text-2xl">Explore the breaks</h3>
+          <div role="tablist" className="mb-8 inline-flex gap-1 rounded-md border border-rule bg-white p-1 text-sm">
+            <TabButton active={tab === 'sample'} onClick={() => setTab('sample')}>
+              Our sample month
+            </TabButton>
+            <TabButton active={tab === 'own'} onClick={() => setTab('own')}>
+              Generate your own
+            </TabButton>
+          </div>
+
+          {/* Tab 1: saved data from the database */}
+          <div hidden={tab !== 'sample'}>
+            {summary ? (
+              <div className={selectedId == null ? '' : 'grid gap-6 lg:grid-cols-5'}>
+                <div className="min-w-0 lg:col-span-3">
+                  <BreaksTable
+                    key={`${summary.runId}-${refreshKey}`}
+                    runId={summary.runId}
+                    counts={summary.breaksByType}
+                    selectedId={selectedId}
+                    onSelect={setSelectedId}
+                  />
                 </div>
-              )}
-            </div>
-          </>
-        )}
+                {selectedId != null && (
+                  <div className="min-w-0 lg:col-span-2 lg:pt-14">
+                    <BreakDetailPanel groupId={selectedId} onClose={() => setSelectedId(null)} />
+                  </div>
+                )}
+              </div>
+            ) : (
+              loaded && <p className="text-muted">The sample month isn’t loaded yet. Try “Generate your own”.</p>
+            )}
+          </div>
+
+          {/* Tab 2: a new month generated in memory */}
+          <div hidden={tab !== 'own'}>
+            <SandboxView />
+          </div>
+        </section>
       </main>
 
       <footer className="border-t border-rule">

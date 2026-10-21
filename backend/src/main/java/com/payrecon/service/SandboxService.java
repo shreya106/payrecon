@@ -135,7 +135,7 @@ public class SandboxService {
         ReconGroup g = r.breaks().get(index);
         BreakForExplanation input = new BreakForExplanation(index, g.breakType(), g.amountImpact(), r.evidenceFor(g));
 
-        BreakExplanation explanation = breakExplainer.explain(List.of(input)).stream()
+        BreakExplanation explanation = breakExplainer.explain(List.of(input), config.asOfDate()).stream()
                 .filter(e -> e.groupId() == index)
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(
